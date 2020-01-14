@@ -21,7 +21,7 @@ pdf(dataBuffer).then(function(data) {
     const lines = data.text
         .replace(/  +/g, ' ')
         .split('\n')
-        .filter(line => line !== '' && line !== ' ')
-        .map(line => line.trim());
+        .map(line => line.trim())
+        .filter(line => line !== '');
     console.log(JSON.stringify(lines, undefined, 2));
 });
