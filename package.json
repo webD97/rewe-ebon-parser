@@ -1,7 +1,7 @@
 {
-  "name": "ebon-bot",
+  "name": "rewe-ebon-parser",
   "version": "0.1.0",
-  "description": "An IMAP client for REWE eBons ",
+  "description": "A parser for REWE eBons",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
