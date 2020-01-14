@@ -1,7 +1,7 @@
 const fs = require('fs');
 const pdf = require('pdf-parse');
 
-let dataBuffer = fs.readFileSync('/mnt/c/Users/a121a6d/Downloads/REWE-eBon.pdf');
+let dataBuffer = fs.readFileSync('./REWE-eBon.pdf');
 
 pdf(dataBuffer).then(function (data) {
     const lines = data.text
@@ -15,7 +15,7 @@ pdf(dataBuffer).then(function (data) {
     };
 
     lines.forEach(line => {
-        const itemHit = line.match(/([0-9A-Za-z %.!+,]*) (-?\d*,\d\d) ([AB]) ?\*?/);
+        const itemHit = line.match(/([0-9A-Za-z %.!+,]*) (-?\d*,\d\d) ([AB]) ?(\*?)/);
         const totalHit = line.match(/SUMME EUR (-?\d*,\d\d)/);
         const gegebenHit = line.match(/Geg\. BAR EUR (\d*,\d\d)/);
         const returnHit = line.match(/Rückgeld BAR EUR (\d*,\d\d)/);
@@ -28,11 +28,13 @@ pdf(dataBuffer).then(function (data) {
             const item = itemHit[1];
             const price = parseFloat(itemHit[2].replace(',', '.'));
             const category = itemHit[3];
+            const paybackQualified = !itemHit[4] && price > 0;
 
             receipt.items.push({
                 category: category,
                 name: item,
-                subTotal: price
+                subTotal: price,
+                paybackQualified: paybackQualified
             });
 
             return;
