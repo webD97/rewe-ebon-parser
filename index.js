@@ -32,8 +32,7 @@ pdf(dataBuffer).then(function (data) {
             receipt.items.push({
                 category: category,
                 name: item,
-                subTotal: price,
-                amount: 1
+                subTotal: price
             });
 
             return;
@@ -42,8 +41,9 @@ pdf(dataBuffer).then(function (data) {
         if (mengeHit) {
             receipt.items[receipt.items.length - 1 ] = {
                 ...receipt.items[receipt.items.length - 1],
-                amount: mengeHit[1],
-                unit: mengeHit[2]
+                amount: parseFloat(mengeHit[1]),
+                unit: mengeHit[2],
+                perUnit: parseFloat(mengeHit[3].replace(',', '.'))
             }
 
             return;
