@@ -1,17 +1,49 @@
-const fs = require('fs');
-const pdf = require('pdf-parse');
+import * as fs from 'fs';
+import pdf from 'pdf-parse';
+
+type TaxCategory = 'A' | 'B';
+
+type ReceiptItem = {
+    category: TaxCategory,
+    name: string,
+    subTotal: number,
+    paybackQualified: boolean,
+    amount?: number,
+    unit?: string,
+    perUnit?: number
+};
+
+type Receipt = {
+    date: Date,
+    markt: string,
+    cashier: string,
+    checkout: string,
+    uid: string,
+    items: ReceiptItem[],
+    total: number,
+    given: number,
+    returned: number
+};
 
 let dataBuffer = fs.readFileSync('./REWE-eBon.pdf');
 
-pdf(dataBuffer).then(function (data) {
+pdf(dataBuffer).then((data: { text: string }) => {
     const lines = data.text
         .replace(/  +/g, ' ')
         .split('\n')
         .map(line => line.trim())
         .filter(line => line !== '');
 
-    const receipt = {
-        items: []
+    const receipt: Receipt = {
+        date: new Date(),
+        markt: '',
+        cashier: '',
+        checkout: '',
+        uid: '',
+        items: [],
+        total: 0,
+        given: 0,
+        returned: 0
     };
 
     lines.forEach(line => {
@@ -27,7 +59,7 @@ pdf(dataBuffer).then(function (data) {
         if (itemHit) {
             const item = itemHit[1];
             const price = parseFloat(itemHit[2].replace(',', '.'));
-            const category = itemHit[3];
+            const category = itemHit[3] as TaxCategory;
             const paybackQualified = !itemHit[4] && price > 0;
 
             receipt.items.push({
@@ -70,7 +102,13 @@ pdf(dataBuffer).then(function (data) {
         }
 
         if (timestampHit) {
-            receipt.date = new Date(Date.UTC(timestampHit[3], timestampHit[2] - 1, timestampHit[1], timestampHit[4], timestampHit[5]));
+            receipt.date = new Date(Date.UTC(
+                parseInt(timestampHit[3]),
+                parseInt(timestampHit[2]) - 1,
+                parseInt(timestampHit[1]),
+                parseInt(timestampHit[4]),
+                parseInt(timestampHit[5])
+            ));
 
             return;
         }

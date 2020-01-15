@@ -2,9 +2,10 @@
   "name": "rewe-ebon-parser",
   "version": "0.1.0",
   "description": "A parser for REWE eBons",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node ./dist/index.js",
+    "watch": "./node_modules/.bin/tsc -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,5 +20,9 @@
   "homepage": "https://github.com/webd97/ebon-bot#readme",
   "dependencies": {
     "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^13.1.7",
+    "typescript": "^3.7.4"
   }
 }
