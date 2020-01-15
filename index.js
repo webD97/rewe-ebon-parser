@@ -43,7 +43,7 @@ pdf(dataBuffer).then(function (data) {
         if (mengeHit) {
             receipt.items[receipt.items.length - 1 ] = {
                 ...receipt.items[receipt.items.length - 1],
-                amount: parseFloat(mengeHit[1]),
+                amount: parseFloat(mengeHit[1].replace(',', '.')),
                 unit: mengeHit[2],
                 perUnit: parseFloat(mengeHit[3].replace(',', '.'))
             }
