@@ -22,7 +22,11 @@ type Receipt = {
     items: ReceiptItem[],
     total: number,
     given: number,
-    returned: number
+    returned: number,
+    payback?: {
+        points?: number,
+        revenue?: number
+    }
 };
 
 let dataBuffer = fs.readFileSync('./REWE-eBon.pdf');
@@ -55,6 +59,8 @@ pdf(dataBuffer).then((data: { text: string }) => {
         const timestampHit = line.match(/(\d*)\.(\d*)\.(\d*) (\d*):(\d*) Bon-Nr\.:(.*)/);
         const marktMatch = line.match(/Markt:(.*) Kasse:(.*) Bed\.:(.*)/);
         const uidMatch = line.match(/UID Nr.: (.*)/);
+        const paybackPointsMatch = line.match(/Sie erhalten (\d*) PAYBACK Punkte auf/);
+        const paybackRevenueMatch = line.match(/einen PAYBACK Umsatz von (.*) EUR!/);
 
         if (itemHit) {
             const item = itemHit[1];
@@ -123,6 +129,24 @@ pdf(dataBuffer).then((data: { text: string }) => {
 
         if (uidMatch) {
             receipt.uid = uidMatch[1];
+
+            return;
+        }
+
+        if (paybackPointsMatch) {
+            receipt.payback = {
+                ...receipt.payback,
+                points: parseInt(paybackPointsMatch[1]),
+            };
+
+            return;
+        }
+
+        if (paybackRevenueMatch) {
+            receipt.payback = {
+                ...receipt.payback,
+                revenue: parseFloat(paybackRevenueMatch[1].replace(',', '.')),
+            };
 
             return;
         }
