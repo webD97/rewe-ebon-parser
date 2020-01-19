@@ -1,8 +1,7 @@
-import * as fs from 'fs';
 import pdf from 'pdf-parse';
 import { Receipt, ReceiptItem, TaxCategory, TaxDetails, Payment, PaybackCoupon } from './ebon-types';
 
-async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
+export default async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
     const data: { text: string } = await pdf(dataBuffer);
     const lines = data.text
         .replace(/  +/g, ' ')
@@ -236,11 +235,3 @@ async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         taxDetails: taxDetails
     };
 }
-
-async function main() {
-    let dataBuffer = fs.readFileSync('./eBons/3.pdf');
-    const receipt = await parseEBon(dataBuffer);
-    console.log(JSON.stringify(receipt, undefined, 2));
-}
-
-main().catch(console.error);
