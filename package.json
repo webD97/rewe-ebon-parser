@@ -2,7 +2,11 @@
   "name": "rewe-ebon-parser",
   "version": "0.1.0",
   "description": "A parser for REWE eBons",
-  "keywords": ["rewe", "ebon", "payback"],
+  "keywords": [
+    "rewe",
+    "ebon",
+    "payback"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -11,8 +15,8 @@
     "watch": "./node_modules/.bin/tsc -w",
     "test": "echo \"Info: no test specified\" && exit 0",
     "prepare": "npm run build",
-    "prepublishOnly" : "npm test",
-    "postversion" : "git push && git push --tags"
+    "prepublishOnly": "npm test",
+    "postversion": "git push && git push --tags"
   },
   "files": [
     "dist/**/*"
