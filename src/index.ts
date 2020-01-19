@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import pdf from 'pdf-parse';
-import { Receipt, ReceiptItem, TaxCategory, TaxDetails, Payment } from './ebon-types';
+import { Receipt, ReceiptItem, TaxCategory, TaxDetails, Payment, PaybackCoupon } from './ebon-types';
 
 async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
     const data: { text: string } = await pdf(dataBuffer);
@@ -24,6 +24,9 @@ async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         paybackPoints: number = Number.NaN,
         paybackRevenue: number = Number.NaN,
         paybackCardNumber: string = '?',
+        paybackCoupons: PaybackCoupon[] = [],
+        usedREWECredit: number = Number.NaN,
+        newREWECredit: number = Number.NaN,
         taxDetails: TaxDetails = {
             A: { taxPercent: Number.NaN, net: Number.NaN, tax: Number.NaN, gross: Number.NaN },
             B: { taxPercent: Number.NaN, net: Number.NaN, tax: Number.NaN, gross: Number.NaN },
@@ -161,6 +164,17 @@ async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             return;
         }
 
+        const paybackCouponMatch = line.match(/(.*) ([0-9.]*) Punkte?/);
+
+        if (paybackCouponMatch) {
+            paybackCoupons.push({
+                name: paybackCouponMatch[1],
+                points: parseInt(paybackCouponMatch[2].replace('.', ''))
+            });
+
+            return;
+        }
+
         const taxDetailsMatch = line.match(/([AB])= ([0-9,]*)% ([0-9,]*) ([0-9,]*) ([0-9,]*)/);
 
         if (taxDetailsMatch) {
@@ -185,6 +199,18 @@ async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             
             return;
         }
+
+        const usedREWECreditMatch = line.match(/Eingesetztes REWE Guthaben: ([0-9,]*) EUR/);
+
+        if (usedREWECreditMatch) {
+            usedREWECredit = parseFloat(usedREWECreditMatch[1].replace(',', '.'));
+        }
+
+        const newREWECreditMatch = line.match(/Neues REWE Guthaben: ([0-9,]*) EUR/);
+        
+        if (newREWECreditMatch) {
+            newREWECredit = parseFloat(newREWECreditMatch[1].replace(',', '.'));
+        }
     });
 
     return {
@@ -202,7 +228,10 @@ async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             card: paybackCardNumber,
             pointsBefore: paybackPointsBefore,
             points: paybackPoints,
-            revenue: paybackRevenue
+            revenue: paybackRevenue,
+            usedCoupons: paybackCoupons,
+            usedREWECredit: usedREWECredit ? usedREWECredit : undefined,
+            newREWECredit: !isNaN(newREWECredit) ? newREWECredit : undefined
         },
         taxDetails: taxDetails
     };

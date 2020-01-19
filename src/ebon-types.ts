@@ -30,11 +30,19 @@ export type Receipt = {
     taxDetails: TaxDetails
 };
 
+export type PaybackCoupon = {
+    name: string,
+    points: number
+};
+
 export type PaybackData = {
     card: string,
     pointsBefore: number,
     points: number,
-    revenue: number
+    revenue: number,
+    usedCoupons: PaybackCoupon[],
+    usedREWECredit?: number,
+    newREWECredit?: number
 };
 
 export type TaxDetailsEntry = {
