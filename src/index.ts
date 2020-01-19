@@ -1,66 +1,37 @@
 import * as fs from 'fs';
 import pdf from 'pdf-parse';
+import { Receipt, ReceiptItem, TaxCategory, TaxDetails, Payment } from './ebon-types';
 
-type TaxCategory = 'A' | 'B';
-
-type ReceiptItem = {
-    category: TaxCategory,
-    name: string,
-    subTotal: number,
-    paybackQualified: boolean,
-    amount?: number,
-    unit?: string,
-    perUnit?: number
-};
-
-type Receipt = {
-    date: Date,
-    markt: string,
-    cashier: string,
-    checkout: string,
-    uid: string,
-    items: ReceiptItem[],
-    total: number,
-    given: number,
-    returned: number,
-    payback?: {
-        points?: number,
-        revenue?: number
-    }
-};
-
-let dataBuffer = fs.readFileSync('./REWE-eBon.pdf');
-
-pdf(dataBuffer).then((data: { text: string }) => {
+async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
+    const data: { text: string } = await pdf(dataBuffer);
     const lines = data.text
         .replace(/  +/g, ' ')
         .split('\n')
         .map(line => line.trim())
         .filter(line => line !== '');
 
-    const receipt: Receipt = {
-        date: new Date(),
-        markt: '',
-        cashier: '',
-        checkout: '',
-        uid: '',
-        items: [],
-        total: 0,
-        given: 0,
-        returned: 0
-    };
+    let date: Date = new Date(),
+        market: string = '?',
+        cashier: string = '?',
+        checkout: string = '?',
+        uid: string = '?',
+        items: ReceiptItem[] = [],
+        total: number = Number.NaN,
+        given: Payment[] = [],
+        change: number = Number.NaN,
+        payout: number = Number.NaN,
+        paybackPointsBefore = Number.NaN,
+        paybackPoints: number = Number.NaN,
+        paybackRevenue: number = Number.NaN,
+        paybackCardNumber: string = '?',
+        taxDetails: TaxDetails = {
+            A: { taxPercent: Number.NaN, net: Number.NaN, tax: Number.NaN, gross: Number.NaN },
+            B: { taxPercent: Number.NaN, net: Number.NaN, tax: Number.NaN, gross: Number.NaN },
+            total: {  net: Number.NaN, tax: Number.NaN, gross: Number.NaN }
+        };
 
     lines.forEach(line => {
-        const itemHit = line.match(/([0-9A-Za-z %.!+,]*) (-?\d*,\d\d) ([AB]) ?(\*?)/);
-        const totalHit = line.match(/SUMME EUR (-?\d*,\d\d)/);
-        const gegebenHit = line.match(/Geg\. BAR EUR (\d*,\d\d)/);
-        const returnHit = line.match(/Rückgeld BAR EUR (\d*,\d\d)/);
-        const mengeHit = line.match(/(.*) (.*) x (.*).*/);
-        const timestampHit = line.match(/(\d*)\.(\d*)\.(\d*) (\d*):(\d*) Bon-Nr\.:(.*)/);
-        const marktMatch = line.match(/Markt:(.*) Kasse:(.*) Bed\.:(.*)/);
-        const uidMatch = line.match(/UID Nr.: (.*)/);
-        const paybackPointsMatch = line.match(/Sie erhalten (\d*) PAYBACK Punkte auf/);
-        const paybackRevenueMatch = line.match(/einen PAYBACK Umsatz von (.*) EUR!/);
+        const itemHit = line.match(/([0-9A-Za-z %.!+,\-]*) (-?\d*,\d\d) ([AB]) ?(\*?)/);
 
         if (itemHit) {
             const item = itemHit[1];
@@ -68,8 +39,8 @@ pdf(dataBuffer).then((data: { text: string }) => {
             const category = itemHit[3] as TaxCategory;
             const paybackQualified = !itemHit[4] && price > 0;
 
-            receipt.items.push({
-                category: category,
+            items.push({
+                taxCategory: category,
                 name: item,
                 subTotal: price,
                 paybackQualified: paybackQualified
@@ -78,37 +49,58 @@ pdf(dataBuffer).then((data: { text: string }) => {
             return;
         }
 
+        const mengeHit = line.match(/(.*) (.*) x (.*).*/);
+
         if (mengeHit) {
-            receipt.items[receipt.items.length - 1 ] = {
-                ...receipt.items[receipt.items.length - 1],
+            items[items.length - 1] = {
+                ...items[items.length - 1],
                 amount: parseFloat(mengeHit[1].replace(',', '.')),
                 unit: mengeHit[2],
-                perUnit: parseFloat(mengeHit[3].replace(',', '.'))
+                pricePerUnit: parseFloat(mengeHit[3].replace(',', '.'))
             }
 
             return;
         }
 
+        const totalHit = line.match(/SUMME EUR (-?\d*,\d\d)/);
+
         if (totalHit) {
-            receipt.total = parseFloat(totalHit[1].replace(',', '.'));
+            total = parseFloat(totalHit[1].replace(',', '.'));
 
             return;
         }
+
+        const gegebenHit = line.match(/Geg\. (.*) EUR ([0-9,]*)/);
 
         if (gegebenHit) {
-            receipt.given = parseFloat(gegebenHit[1].replace(',', '.'));
+            given.push({
+                type: gegebenHit[1],
+                value: parseFloat(gegebenHit[2].replace(',', '.'))
+            });
 
             return;
         }
+
+        const returnHit = line.match(/Rückgeld BAR EUR ([0-9,]*)/);
 
         if (returnHit) {
-            receipt.returned = parseFloat(returnHit[1].replace(',', '.'));
+            change = parseFloat(returnHit[1].replace(',', '.'));
 
             return;
         }
 
+        const payoutMatch = line.match(/AUSZAHLUNG EUR ([0-9,]*)/);
+
+        if (payoutMatch) {
+            payout = parseFloat(payoutMatch[1].replace(',', '.'));
+
+            return;
+        }
+
+        const timestampHit = line.match(/(\d*)\.(\d*)\.(\d*) (\d*):(\d*) Bon-Nr\.:(.*)/);
+
         if (timestampHit) {
-            receipt.date = new Date(Date.UTC(
+            date = new Date(Date.UTC(
                 parseInt(timestampHit[3]),
                 parseInt(timestampHit[2]) - 1,
                 parseInt(timestampHit[1]),
@@ -119,38 +111,107 @@ pdf(dataBuffer).then((data: { text: string }) => {
             return;
         }
 
+        const marktMatch = line.match(/Markt:(.*) Kasse:(.*) Bed\.:(.*)/);
+
         if (marktMatch) {
-            receipt.markt = marktMatch[1];
-            receipt.checkout = marktMatch[2];
-            receipt.cashier = marktMatch[3];
+            market = marktMatch[1];
+            checkout = marktMatch[2];
+            cashier = marktMatch[3];
 
             return;
         }
+
+        const uidMatch = line.match(/UID Nr.: (.*)/);
 
         if (uidMatch) {
-            receipt.uid = uidMatch[1];
+            uid = uidMatch[1];
 
             return;
         }
+
+        const paybackPointsMatch = line.match(/Sie erhalten (\d*) PAYBACK Punkte auf/);
 
         if (paybackPointsMatch) {
-            receipt.payback = {
-                ...receipt.payback,
-                points: parseInt(paybackPointsMatch[1]),
-            };
+            paybackPoints = parseInt(paybackPointsMatch[1]);
 
             return;
         }
 
-        if (paybackRevenueMatch) {
-            receipt.payback = {
-                ...receipt.payback,
-                revenue: parseFloat(paybackRevenueMatch[1].replace(',', '.')),
-            };
+        const paybackRevenueMatch = line.match(/einen PAYBACK Umsatz von (.*) EUR!/);
 
+        if (paybackRevenueMatch) {
+            paybackRevenue = parseFloat(paybackRevenueMatch[1].replace(',', '.'));
+
+            return;
+        }
+
+        const paybackPointsBeforeMatch = line.match(/Punktestand vor Einkauf: ([0-9.]*)/);
+
+        if (paybackPointsBeforeMatch) {
+            paybackPointsBefore = parseFloat(paybackPointsBeforeMatch[1].replace('.', ''));
+
+            return;
+        }
+
+        const paybackCardNumberMatch = line.match(/PAYBACK Karten-Nr\.: ([0-9#]*)/);
+
+        if (paybackCardNumberMatch) {
+            paybackCardNumber = paybackCardNumberMatch[1];
+
+            return;
+        }
+
+        const taxDetailsMatch = line.match(/([AB])= ([0-9,]*)% ([0-9,]*) ([0-9,]*) ([0-9,]*)/);
+
+        if (taxDetailsMatch) {
+            taxDetails[taxDetailsMatch[1] as TaxCategory] = {
+                taxPercent: parseFloat(taxDetailsMatch[2].replace(',', '.')),
+                net: parseFloat(taxDetailsMatch[3].replace(',', '.')),
+                tax: parseFloat(taxDetailsMatch[4].replace(',', '.')),
+                gross: parseFloat(taxDetailsMatch[5].replace(',', '.')),
+            }
+
+            return;
+        }
+
+        const totalTaxMatch = line.match(/Gesamtbetrag ([0-9,]*) ([0-9,]*) ([0-9,]*)/);
+
+        if (totalTaxMatch) {
+            taxDetails.total = {
+                net: parseFloat(totalTaxMatch[1].replace(',', '.')),
+                tax: parseFloat(totalTaxMatch[2].replace(',', '.')),
+                gross: parseFloat(totalTaxMatch[3].replace(',', '.')),
+            };
+            
             return;
         }
     });
 
+    return {
+        date: date,
+        market: market,
+        cashier: cashier,
+        checkout: checkout,
+        vatin: uid,
+        items: items,
+        total: total,
+        given: given,
+        change: change ? change : undefined,
+        payout: payout ? payout : undefined,
+        payback: {
+            card: paybackCardNumber,
+            pointsBefore: paybackPointsBefore,
+            points: paybackPoints,
+            revenue: paybackRevenue
+        },
+        taxDetails: taxDetails
+    };
+}
+
+async function main() {
+    let dataBuffer = fs.readFileSync('./eBons/3.pdf');
+    const receipt = await parseEBon(dataBuffer);
     console.log(JSON.stringify(receipt, undefined, 2));
-});
+}
+
+main().catch(console.error);
