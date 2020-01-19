@@ -5,7 +5,7 @@ This library parses [REWE eBons](https://www.rewe-group.com/de/newsroom/pressemi
 ```json
 {
   "date": "2019-12-07T16:21:00.000Z",
-  "markt": "0449",
+  "market": "0449",
   "cashier": "545454",
   "checkout": "3",
   "vatin": "DE812706034",
@@ -218,7 +218,27 @@ This library parses [REWE eBons](https://www.rewe-group.com/de/newsroom/pressemi
     "card": "#########9334",
     "pointsBefore": 4,
     "points": 405,
-    "revenue": 49.31
+    "revenue": 49.31,
+    "usedCoupons": [
+      {
+        "name": "eCoupon 10FACH P. Milch",
+        "points": 9
+      },
+      {
+        "name": "eCoupon 10FACH Punkte Bier",
+        "points": 27
+      },
+      {
+        "name": "eCoupon 15FACH Punkte",
+        "points": 336
+      },
+      {
+        "name": "Coupon Brotaufstrich10-fach",
+        "points": 9
+      }
+    ],
+    "usedREWECredit": 30,
+    "newREWECredit": 0
   },
   "taxDetails": {
     "A": {
@@ -240,5 +260,4 @@ This library parses [REWE eBons](https://www.rewe-group.com/de/newsroom/pressemi
     }
   }
 }
-
 ```
