@@ -1,10 +1,15 @@
 # REWE eBon parser
 This library parses [REWE eBons](https://www.rewe-group.com/de/newsroom/pressemitteilungen/1753-rewe-elektronischer-kassenbon) into JS objects.
 
+## Installation
+```shell
+$ npm install --save rewe-ebon-parser
+```
+
 ## Usage
 ```js
 async function main() {
-    let dataBuffer = fs.readFileSync('ebon.pdf');
+    const dataBuffer = fs.readFileSync('ebon.pdf');
     const receipt = await parseEBon(dataBuffer);
     console.log(JSON.stringify(receipt, undefined, 2));
 }
