@@ -23,14 +23,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/webd97/ebon-bot.git"
+    "url": "git+https://github.com/webd97/rewe-ebon-parser.git"
   },
   "author": "Christian Danscheid",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/webd97/ebon-bot/issues"
+    "url": "https://github.com/webd97/rewe-ebon-parser/issues"
   },
-  "homepage": "https://github.com/webd97/ebon-bot#readme",
+  "homepage": "https://github.com/webd97/rewe-ebon-parser#readme",
   "dependencies": {
     "pdf-parse": "^1.1.1"
   },
