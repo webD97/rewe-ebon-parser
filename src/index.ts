@@ -27,8 +27,6 @@ export default async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         usedREWECredit: number = Number.NaN,
         newREWECredit: number = Number.NaN,
         taxDetails: TaxDetails = {
-            A: { taxPercent: Number.NaN, net: Number.NaN, tax: Number.NaN, gross: Number.NaN },
-            B: { taxPercent: Number.NaN, net: Number.NaN, tax: Number.NaN, gross: Number.NaN },
             total: {  net: Number.NaN, tax: Number.NaN, gross: Number.NaN }
         };
 

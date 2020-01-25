@@ -58,6 +58,6 @@ export type TaxDetails = {
         tax: number,
         gross: number
     },
-    A: TaxDetailsEntry,
-    B: TaxDetailsEntry
+    A?: TaxDetailsEntry,
+    B?: TaxDetailsEntry
 };
