@@ -1,7 +1,11 @@
 import pdf from 'pdf-parse';
 import { Receipt, ReceiptItem, TaxCategory, TaxDetails, Payment, PaybackCoupon } from './ebon-types';
 
-export default async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
+/**
+ * Create a Receipt object from a REWE eBon PDF file.
+ * @param dataBuffer PDF data
+ */
+export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
     const data: { text: string } = await pdf(dataBuffer);
     const lines = data.text
         .replace(/  +/g, ' ')
@@ -42,6 +46,7 @@ export default async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             items.push({
                 taxCategory: category,
                 name: item,
+                amount: 1,
                 subTotal: price,
                 paybackQualified: paybackQualified
             });
@@ -221,15 +226,21 @@ export default async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         given: given,
         change: change ? change : undefined,
         payout: payout ? payout : undefined,
-        payback: {
+        payback: paybackCardNumber ? ({
             card: paybackCardNumber,
             pointsBefore: paybackPointsBefore,
-            points: paybackPoints,
-            revenue: paybackRevenue,
+            earnedPoints: paybackPoints,
+            get basePoints() {
+                return this.earnedPoints - this.couponPoints
+            },
+            get couponPoints() {
+                return this.usedCoupons.reduce((accumulator, nextCoupon) => accumulator + nextCoupon.points, 0)
+            },
+            qualifiedRevenue: paybackRevenue,
             usedCoupons: paybackCoupons,
             usedREWECredit: usedREWECredit ? usedREWECredit : undefined,
             newREWECredit: !isNaN(newREWECredit) ? newREWECredit : undefined
-        },
+        }) : undefined,
         taxDetails: taxDetails
     };
 }
