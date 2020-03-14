@@ -215,10 +215,11 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         }
     });
 
+    // Check if we missed an item
     const realTotalInCents = items.reduce((accumulator, nextItem) => accumulator + nextItem.subTotal * 100, 0);
     const totalInCents = total * 100;
-    // Check if we missed an item
-    if (realTotalInCents != totalInCents) {
+
+    if (realTotalInCents.toFixed(2) !== totalInCents.toFixed(2)) {
         throw new Error(`Something went wrong when parsing the eBon: The eBon states a total sum of ${totalInCents} but the parser only found items worth ${realTotalInCents}.`);
     }
 
