@@ -35,7 +35,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         };
 
     lines.forEach(line => {
-        const itemHit = line.match(/([0-9A-Za-z %.!+,\-]*) (-?\d*,\d\d) ([AB]) ?(\*?)/);
+        const itemHit = line.match(/([0-9A-Za-zäöüÄÖÜß %.!+,\-]*) (-?\d*,\d\d) ([AB]) ?(\*?)/);
 
         if (itemHit) {
             const item = itemHit[1];
