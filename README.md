@@ -1,5 +1,5 @@
 # REWE eBon parser
-This library parses [REWE eBons](https://www.rewe-group.com/de/newsroom/pressemitteilungen/1753-rewe-elektronischer-kassenbon) into JS objects.
+This library parses [REWE eBons](https://web.archive.org/web/20201231133621/https://www.rewe-group.com/de/newsroom/pressemitteilungen/1753-rewe-elektronischer-kassenbon) into JS objects.
 
 ## Installation
 ```shell
