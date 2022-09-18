@@ -134,7 +134,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             return;
         }
 
-        const paybackPointsMatch = line.match(/Sie erhalten (\d*) PAYBACK Punkte auf/);
+        const paybackPointsMatch = line.match(/Sie erhalten (\d*) PAYBACK Punkte? auf/);
 
         if (paybackPointsMatch) {
             paybackPoints = parseInt(paybackPointsMatch[1]);
