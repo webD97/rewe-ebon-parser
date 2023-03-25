@@ -1,5 +1,5 @@
 import pdf from 'pdf-parse';
-import { Receipt, ReceiptItem, TaxCategory, TaxDetails, Payment, PaybackCoupon } from './ebon-types';
+import { MarketAddress, PaybackCoupon, Payment, Receipt, ReceiptItem, TaxCategory, TaxDetails } from './ebon-types';
 
 /**
  * Create a Receipt object from a REWE eBon PDF file.
@@ -15,6 +15,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
 
     let date: Date = new Date(),
         market: string = '?',
+        marketAddress: MarketAddress | undefined = undefined,
         cashier: string = '?',
         checkout: string = '?',
         uid: string = '?',
@@ -33,6 +34,16 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         taxDetails: TaxDetails = {
             total: {  net: Number.NaN, tax: Number.NaN, gross: Number.NaN }
         };
+
+    const addressMatch = data.text.match(/[\s\*]*([a-zäöüß \d.,-]+?)[\s\*]*(\d{5})\s*([a-zäöüß \d.,-]+)[\s\*]*/im);
+
+    if (addressMatch) {
+      marketAddress = {
+        street: addressMatch[1].trim(),
+        zip: Number(addressMatch[2]),
+        city: addressMatch[3].trim(),
+      };
+    }
 
     lines.forEach(line => {
         const itemHit = line.match(/([0-9A-Za-zäöüÄÖÜß &%.!+,\-]*) (-?\d*,\d\d) ([AB]) ?(\*?)/);
@@ -226,6 +237,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
     return {
         date: date,
         market: market,
+        marketAddress: marketAddress,
         cashier: cashier,
         checkout: checkout,
         vatin: uid,
