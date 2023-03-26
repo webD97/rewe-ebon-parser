@@ -36,7 +36,7 @@ export type MarketAddress = {
   street: string;
 
   /** ZIP of market */
-  zip: number;
+  zip: string;
 
   /** City of market */
   city: string;

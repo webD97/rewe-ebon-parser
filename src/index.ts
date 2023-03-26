@@ -40,7 +40,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
     if (addressMatch) {
       marketAddress = {
         street: addressMatch[1].trim(),
-        zip: Number(addressMatch[2]),
+        zip: addressMatch[2],
         city: addressMatch[3].trim(),
       };
     }
