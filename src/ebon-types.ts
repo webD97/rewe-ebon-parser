@@ -31,12 +31,26 @@ export type Payment = {
     value: number
 }
 
+export type MarketAddress = {
+  /** Street of market */
+  street: string;
+
+  /** ZIP of market */
+  zip: string;
+
+  /** City of market */
+  city: string;
+};
+
 export type Receipt = {
     /** Date and time of the purchase */
     date: Date,
 
     /** Market identifier */
     market: string,
+
+    /** Market address */
+    marketAddress?: MarketAddress;
 
     /** Cashier identifier */
     cashier: string,
