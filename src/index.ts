@@ -145,10 +145,11 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             return;
         }
 
-        const paybackPointsMatch = line.match(/Sie erhalten (\d*) PAYBACK Punkte? auf/);
+        const paybackPointsMatch = line.match(/Sie erhalten (\d*) PAYBACK Punkte? auf|Mit diesem Einkauf gesammelt: (\d*) Punkte?/);
 
         if (paybackPointsMatch) {
-            paybackPoints = parseInt(paybackPointsMatch[1]);
+            const match = paybackPointsMatch.slice(1).find(group => group != null)!;
+            paybackPoints = parseInt(match);
 
             return;
         }
@@ -161,10 +162,11 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             return;
         }
 
-        const paybackPointsBeforeMatch = line.match(/Punktestand vor Einkauf: ([0-9.]*)/);
+        const paybackPointsBeforeMatch = line.match(/Punktestand vor Einkauf: ([0-9.]*)|Punkte vor dem Einkauf: ([0-9.]*)/);
 
         if (paybackPointsBeforeMatch) {
-            paybackPointsBefore = parseFloat(paybackPointsBeforeMatch[1].replace('.', ''));
+            const match = paybackPointsBeforeMatch.slice(1).find(group => group != null)!;
+            paybackPointsBefore = parseFloat(match.replace('.', ''));
 
             return;
         }
@@ -256,7 +258,10 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             get couponPoints() {
                 return this.usedCoupons.reduce((accumulator, nextCoupon) => accumulator + nextCoupon.points, 0)
             },
-            qualifiedRevenue: paybackRevenue,
+            get qualifiedRevenue() {
+                if (!Number.isNaN(paybackRevenue)) return paybackRevenue;
+                return items.filter(item => item.paybackQualified).reduce((prev, next) => prev + next.subTotal, 0)
+            },
             usedCoupons: paybackCoupons,
             usedREWECredit: usedREWECredit ? usedREWECredit : undefined,
             newREWECredit: !isNaN(newREWECredit) ? newREWECredit : undefined
