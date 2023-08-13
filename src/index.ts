@@ -39,7 +39,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
 
     if (addressMatch) {
       marketAddress = {
-        street: addressMatch[1].trim(),
+        street: addressMatch[1].replace(/\s+/g, ' ').replace(/,$/, '').trim(),
         zip: addressMatch[2],
         city: addressMatch[3].trim(),
       };
@@ -260,7 +260,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             },
             get qualifiedRevenue() {
                 if (!Number.isNaN(paybackRevenue)) return paybackRevenue;
-                return items.filter(item => item.paybackQualified).reduce((prev, next) => prev + next.subTotal, 0)
+                return items.filter(item => item.paybackQualified || item.subTotal < 0).reduce((prev, next) => prev + next.subTotal, 0)
             },
             usedCoupons: paybackCoupons,
             usedREWECredit: usedREWECredit ? usedREWECredit : undefined,
