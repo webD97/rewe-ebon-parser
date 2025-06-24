@@ -46,7 +46,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
     }
 
     lines.forEach(line => {
-        const itemHit = line.match(/([0-9A-Za-zäöüÄÖÜß &%.!+,\-]*) (-?\d*,\d\d) ([AB]) ?(\*?)/);
+        const itemHit = line.match(/([0-9A-Za-zäöüÄÖÜß &%.!+,\-]*) (-?\d*,\d\d) ([ABC]) ?(\*?)/);
 
         if (itemHit) {
             const item = itemHit[1];
@@ -190,7 +190,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
             return;
         }
 
-        const taxDetailsMatch = line.match(/([AB])= ([0-9,]*)% ([0-9,]*) ([0-9,]*) ([0-9,]*)/);
+        const taxDetailsMatch = line.match(/([ABC])= ([0-9,]*)% ([0-9,]*) ([0-9,]*) ([0-9,]*)/);
 
         if (taxDetailsMatch) {
             taxDetails[taxDetailsMatch[1] as TaxCategory] = {
