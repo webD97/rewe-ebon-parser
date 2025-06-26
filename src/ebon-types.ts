@@ -141,5 +141,8 @@ export type TaxDetails = {
     A?: TaxDetailsEntry,
 
     /** Tax on category B items */
-    B?: TaxDetailsEntry
+    B?: TaxDetailsEntry,
+
+    /** Tax on category C items */
+    C?: TaxDetailsEntry
 };
