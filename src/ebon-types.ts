@@ -73,6 +73,9 @@ export type Receipt = {
     /** Change given to the customer if he paid cash */
     change?: number,
 
+    /** Amount the customer decided to leave as a tip (Stimmt so) */
+    donation?: number,
+
     /** Cash money paid out; only defined if the customer used this feature */
     payout?: number,
 

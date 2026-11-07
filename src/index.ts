@@ -21,6 +21,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         uid: string = '?',
         items: ReceiptItem[] = [],
         total: number = Number.NaN,
+        donation: number = 0,
         given: Payment[] = [],
         change: number = Number.NaN,
         payout: number = Number.NaN,
@@ -82,6 +83,14 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
 
         if (totalHit) {
             total = parseFloat(totalHit[1].replace(',', '.'));
+
+            return;
+        }
+
+        const donationHit = line.match(/Stimmt so! (-?\d*,\d\d)/);
+
+        if (donationHit) {
+            donation = parseFloat(donationHit[1].replace(',', '.'));
 
             return;
         }
@@ -211,7 +220,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
                 tax: parseFloat(totalTaxMatch[2].replace(',', '.')),
                 gross: parseFloat(totalTaxMatch[3].replace(',', '.')),
             };
-            
+
             return;
         }
 
@@ -222,7 +231,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         }
 
         const newREWECreditMatch = line.match(/Neues REWE Guthaben: ([0-9,]*) EUR/);
-        
+
         if (newREWECreditMatch) {
             newREWECredit = parseFloat(newREWECreditMatch[1].replace(',', '.'));
         }
@@ -230,7 +239,10 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
 
     // Check if we missed an item
     const realTotalInCents = items.reduce((accumulator, nextItem) => accumulator + nextItem.subTotal * 100, 0);
-    const totalInCents = total * 100;
+    let totalInCents = total * 100;
+    if (donation > 0) {
+        totalInCents -= donation * 100;
+    }
 
     if (realTotalInCents.toFixed(2) !== totalInCents.toFixed(2)) {
         throw new Error(`Something went wrong when parsing the eBon: The eBon states a total sum of ${totalInCents} but the parser only found items worth ${realTotalInCents}.`);
@@ -245,6 +257,7 @@ export async function parseEBon(dataBuffer: Buffer): Promise<Receipt> {
         vatin: uid,
         items: items,
         total: total,
+        donation: donation,
         given: given,
         change: change ? change : undefined,
         payout: payout ? payout : undefined,
